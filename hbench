@@ -9,7 +9,7 @@ from getpass import getuser
 from os import path as ospath
 from sys import stdout
 
-from benchmarks import benchmark_list_databases, benchmark_create_table, benchmark_demo, benchmark_drop_table
+from benchmarks import benchmark_list_databases, benchmark_create_table, benchmark_drop_table, benchmark_list_tables
 from hmsclient import HMSClient
 from microbench import MicroBench
 from benchsuite import BenchSuite
@@ -17,6 +17,15 @@ from benchsuite import BenchSuite
 _default_host = 'localhost'
 _default_port = 9083
 _LIST_COMMAND = 'list'
+
+# Default number of warmup cycles
+WARMUP_CYCLES = 15
+# Default number of bench cycles
+BENCH_CYCES = 100
+# Time units - by default use milliseconds
+SCALE = 1000
+# Number of objects to create for testing
+OBJECTS = 1000
 
 
 def main():
@@ -27,8 +36,10 @@ def main():
     parser.add_argument('-t', '--table', default=getuser() + '_test_table', help='table name')
     parser.add_argument('-L', '--loglevel', help='Log level', default='error',
                         choices=['info', 'debug', 'warning', 'error'])
-    parser.add_argument('-W', '--warmup', default=15, type=int, help='Warmup cycles')
-    parser.add_argument('-B', '--benchmark', default=100, type=int, help='Benchmark cycles')
+    parser.add_argument('-W', '--warmup', default=WARMUP_CYCLES, type=int, help='Warmup cycles')
+    parser.add_argument('-B', '--benchmark', default=BENCH_CYCES, type=int, help='Benchmark cycles')
+    parser.add_argument('-N', '--objects', default=OBJECTS, type=int, help='Number of test objects')
+    parser.add_argument('--scale', default=SCALE, type=int, help='time units scale, fractions of sec')
     parser.add_argument('-o', '--output', default=stdout, type=argparse.FileType('w'), help='output file')
     parser.add_argument('--sanitize', action='store_true', help='Sanitize results')
     parser.add_argument('--savedata', help='location for raw benchmark data')
@@ -47,26 +58,42 @@ def main():
     logging.basicConfig(level=numeric_level)
 
     logger = logging.getLogger(__name__)
-    logger.info('Running benchmark to %s using %d warmup and %d benchmark cycles',
-                args.host, args.warmup, args.benchmark)
+    logger.info('Running benchmark to %s using %d warmup and %d benchmark cycles; using %d objects',
+                args.host, args.warmup, args.benchmark, args.objects)
 
     bench = MicroBench(args.warmup, args.benchmark)
-    suite = BenchSuite(bench, 1000, sanitize=args.sanitize)
+    suite = BenchSuite(bench, args.scale, sanitize=args.sanitize)
 
     with HMSClient(args.host) as client:
         setup(client, args)
         try:
             suite.add('listDb', lambda b: benchmark_list_databases(client, b))
+            suite.add('listOneTable',
+                      lambda b: benchmark_list_tables(client,
+                                                      b,
+                                                      args.db,
+                                                      args.table,
+                                                      args.user,
+                                                      1))
             suite.add('createTable',
-                      lambda b: benchmark_create_table(client, b,
+                      lambda b: benchmark_create_table(client,
+                                                       b,
                                                        args.db,
                                                        args.table,
                                                        args.user))
             suite.add('dropTable',
-                      lambda b: benchmark_drop_table(client, b,
+                      lambda b: benchmark_drop_table(client,
+                                                     b,
                                                      args.db,
                                                      args.table,
                                                      args.user))
+            suite.add('listNTables',
+                      lambda b: benchmark_list_tables(client,
+                                                      b,
+                                                      args.db,
+                                                      args.table,
+                                                      args.user,
+                                                      args.objects))
             if args.list:
                 for name in suite.list(args.filter):
                     print(name)
