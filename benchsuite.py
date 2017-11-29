@@ -20,6 +20,7 @@ class BenchSuite(object):
 
     def add(self, name, test):
         self.__suite[name] = test
+        return self
 
     def run(self):
         logger = logging.getLogger(__name__)
@@ -33,10 +34,10 @@ class BenchSuite(object):
         return self.__result
 
     def print(self, file):
-        file.write('{:20s}{:6s}{:6s}{:6s}{:6s}{:6s}{:6s}\n'.format('Name', 'Mean', 'Med', 'Min', 'Max', 'Stdev', 'Var'))
+        file.write('{:20s}{:8s}{:8s}{:8s}{:8s}{:8s}{:8s}\n'.format('Name', 'Mean', 'Med', 'Min', 'Max', 'Stdev', 'Var'))
         for name in sorted(self.__result.keys()):
             result = self.__result[name]
-            file.write('{:20s}{:<6.2g}{:<6.2g}{:<6.2g}{:<6.2g}{:<6.2g}{:<6.2g}\n'.format(name,
+            file.write('{:20s}{:<8.3g}{:<8.3g}{:<8.3g}{:<8.3g}{:<8.3g}{:<8.3g}\n'.format(name,
                                                                                   result.mean * self.__scale,
                                                                                   result.median * self.__scale,
                                                                                   result.min * self.__scale,

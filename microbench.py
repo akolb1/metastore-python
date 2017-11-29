@@ -42,17 +42,14 @@ class MicroBench(object):
         logger.debug("mean time is %g seconds", stats.mean)
         return stats
 
-    def bench(self, what, pre=None, post=None):
+    def bench(self, pre=None, what=None, post=None):
 
-        def execute():
+        def warmup():
             if pre:
                 pre()
             what()
             if post:
                 post()
-
-        stats = Statistics()
-        self.repeat(execute, self.__warmup)
 
         def measure():
             if pre:
@@ -64,5 +61,7 @@ class MicroBench(object):
             if post:
                 post()
 
+        stats = Statistics()
+        self.repeat(warmup, self.__warmup)
         self.repeat(measure, self.__iterations)
         return stats

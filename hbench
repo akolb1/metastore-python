@@ -9,7 +9,7 @@ from getpass import getuser
 from os import path as ospath
 from sys import stdout
 
-from benchmarks import benchmark_list_databases
+from benchmarks import benchmark_list_databases, benchmark_create_table, benchmark_demo, benchmark_drop_table
 from hmsclient import HMSClient
 from microbench import MicroBench
 from benchsuite import BenchSuite
@@ -20,11 +20,11 @@ _LIST_COMMAND = 'list'
 
 
 def main():
-
     parser = argparse.ArgumentParser(description='Hive Metastore benchmarking tool')
     parser.add_argument('-H', '--host', default=_default_host,
                         help='HMS server address')
-    parser.add_argument('-d', '--db', help='database name', default=getuser()+'_test')
+    parser.add_argument('-d', '--db', help='database name', default=getuser() + '_test')
+    parser.add_argument('-t', '--table', default=getuser() + '_test_table', help='table name')
     parser.add_argument('-L', '--loglevel', help='Log level', default='error',
                         choices=['info', 'debug', 'warning', 'error'])
     parser.add_argument('-W', '--warmup', default=15, type=int, help='Warmup cycles')
@@ -46,7 +46,7 @@ def main():
 
     logger = logging.getLogger(__name__)
     logger.info('Running benchmark to %s using %d warmup and %d benchmark cycles',
-                 args.host, args.warmup, args.benchmark)
+                args.host, args.warmup, args.benchmark)
 
     bench = MicroBench(args.warmup, args.benchmark)
     suite = BenchSuite(bench, 1000, sanitize=args.sanitize)
@@ -55,6 +55,16 @@ def main():
         setup(client, args)
         try:
             suite.add('listDb', lambda b: benchmark_list_databases(client, b))
+            suite.add('createTable',
+                      lambda b: benchmark_create_table(client, b,
+                                                       args.db,
+                                                       args.table,
+                                                       args.user))
+            suite.add('dropTable',
+                      lambda b: benchmark_drop_table(client, b,
+                                                     args.db,
+                                                     args.table,
+                                                     args.user))
             suite.run()
             if args.csv or args.delimiter:
                 suite.print_csv(args.output, args.delimiter if args.delimiter else '\t')

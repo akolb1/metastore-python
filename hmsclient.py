@@ -1,3 +1,5 @@
+import logging
+
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
 
@@ -115,3 +117,14 @@ class HMSClient(object):
 
     def create_table(self, table):
         self.__client.create_table(table)
+
+    def drop_table(self, db_name, table_name):
+        """
+        Drop Hive table
+
+        :param db_name: Database name
+        :type db_name: str
+        :param table_name: Table Name
+        :type table_name: str
+        """
+        self.__client.drop_table(db_name, table_name, True)
