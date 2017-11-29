@@ -43,6 +43,7 @@ class MicroBench(object):
         return stats
 
     def bench(self, pre=None, what=None, post=None):
+        logger = logging.getLogger(__name__)
 
         def warmup():
             if pre:
@@ -62,6 +63,9 @@ class MicroBench(object):
                 post()
 
         stats = Statistics()
+        logger.debug("warming up")
         self.repeat(warmup, self.__warmup)
+        logger.debug("measuring time")
         self.repeat(measure, self.__iterations)
+        logger.debug("mean time is %g seconds", stats.mean)
         return stats

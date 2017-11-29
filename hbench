@@ -33,9 +33,11 @@ def main():
     parser.add_argument('--sanitize', action='store_true', help='Sanitize results')
     parser.add_argument('--savedata', help='location for raw benchmark data')
     parser.add_argument('--delimiter', help='delimiter for CSV files')
+    parser.add_argument('--filter', action='append', help='benchmark filter')
     parser.add_argument('--csv', action='store_true', help='Produce CSV output')
     parser.add_argument('-u', '--user', help='user name', default=getuser())
     parser.add_argument('-v', '--verbose', action='store_true', help='show more information')
+    parser.add_argument('--list', action='store_true', help='list benchmarks instead of running them')
 
     args = parser.parse_args()
 
@@ -65,7 +67,12 @@ def main():
                                                      args.db,
                                                      args.table,
                                                      args.user))
-            suite.run()
+            if args.list:
+                for name in suite.list(args.filter):
+                    print(name)
+                return 0
+
+            suite.run(args.filter)
             if args.csv or args.delimiter:
                 suite.print_csv(args.output, args.delimiter if args.delimiter else '\t')
             else:

@@ -1,4 +1,5 @@
 # noinspection PyCompatibility
+import logging
 
 try:
     import statistics
@@ -68,6 +69,8 @@ class Statistics(object):
         min_val = mean_value - delta
         max_val = mean_value + delta
         new_data = [x for x in self.data if (min_val < x < max_val)]
+        logger = logging.getLogger(__name__)
+        logger.debug('dropped %s points with sanitization', len(self.data) - len(new_data))
         return Statistics(new_data)
 
     def write(self, name):
