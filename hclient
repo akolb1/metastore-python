@@ -58,6 +58,10 @@ def main():
                     for t in client.get_all_tables(db):
                         if not args.table or re.search(args.table, t):
                             print('{}.{}'.format(db, t))
+                            if args.verbose:
+                                tbl = client.get_table(db, t)
+                                print('\towner: {}, location: {}'.format(tbl.owner, tbl.sd.location))
+                                print('\t\t', ', '.join(client.parse_schema(tbl.sd.cols)))
 
             return 0
 

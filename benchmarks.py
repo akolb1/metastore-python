@@ -78,6 +78,14 @@ def benchmark_list_tables(client, bench, db, table_name, owner, ntables):
         _drop_many_tables(client, db, table_name, ntables)
 
 
+def benchmark_get_table(client, bench, db, table_name, owner):
+    _create_many_tables(client, db, table_name, owner, 1)
+    try:
+        return bench.bench_simple(lambda: client.get_table(db, table_name+'_0'))
+    finally:
+        _drop_many_tables(client, db, table_name, 1)
+
+
 # noinspection SpellCheckingInspection
 def _create_many_tables(client, db, table_name, owner, ntables):
     schema = HMSClient.make_schema(['name'])

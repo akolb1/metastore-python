@@ -9,7 +9,8 @@ from getpass import getuser
 from os import path as ospath
 from sys import stdout
 
-from benchmarks import benchmark_list_databases, benchmark_create_table, benchmark_drop_table, benchmark_list_tables
+from benchmarks import benchmark_list_databases, benchmark_create_table, benchmark_drop_table, benchmark_list_tables, \
+    benchmark_get_table
 from hmsclient import HMSClient
 from microbench import MicroBench
 from benchsuite import BenchSuite
@@ -81,6 +82,12 @@ def main():
                                                        args.db,
                                                        args.table,
                                                        args.user))
+            suite.add('getTable',
+                      lambda b: benchmark_get_table(client,
+                                                    b,
+                                                    args.db,
+                                                    args.table,
+                                                    args.user))
             suite.add('dropTable',
                       lambda b: benchmark_drop_table(client,
                                                      b,

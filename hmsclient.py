@@ -1,5 +1,3 @@
-import logging
-
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
 
@@ -115,8 +113,20 @@ class HMSClient(object):
 
         return schema
 
+    @staticmethod
+    def parse_schema(schemas):
+        """
+        Convert list of FieldSchema objects in a list of name:typ strings
+
+        :param schemas:
+        :type schemas: list[FieldSchema]
+        :return:
+        """
+        return map(lambda s: '{}:{}'.format(s.name, s.type), schemas)
+
     def create_table(self, table):
         self.__client.create_table(table)
+
 
     def drop_table(self, db_name, table_name):
         """
@@ -128,3 +138,17 @@ class HMSClient(object):
         :type table_name: str
         """
         self.__client.drop_table(db_name, table_name, True)
+
+    def get_table(self, db_name, table_name):
+        """
+        Get table information
+
+        :param db_name: Database name
+        :type db_name: str
+        :param table_name: Table name
+        :type table_name: str
+        :return: Table info
+        :rtype: Table
+        """
+        return self.__client.get_table(db_name, table_name)
+        pass
