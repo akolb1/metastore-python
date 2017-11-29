@@ -41,7 +41,7 @@ class HMSClient(object):
     def get_all_tables(self, db_name):
         return self.__client.get_all_tables(db_name=db_name)
 
-    def create_database(self, db_name, comment=None, user=None):
+    def create_database(self, db_name, comment=None, owner=None):
         """
         Create database
 
@@ -49,10 +49,10 @@ class HMSClient(object):
         :type db_name: str
         :param comment: database comment
         :type comment: str
-        :param user: database user
-        :type user: str
+        :param owner: database user
+        :type owner: str
         """
-        self.__client.create_database(Database(name=db_name, description=comment, ownerName=user))
+        self.__client.create_database(Database(name=db_name, description=comment, ownerName=owner))
 
     def drop_database(self, db_name):
         """

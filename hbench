@@ -21,7 +21,7 @@ _LIST_COMMAND = 'list'
 
 def main():
 
-    parser = argparse.ArgumentParser(description='Hive Metastore client')
+    parser = argparse.ArgumentParser(description='Hive Metastore benchmarking tool')
     parser.add_argument('-H', '--host', default=_default_host,
                         help='HMS server address')
     parser.add_argument('-d', '--db', help='database name', default=getuser()+'_test')

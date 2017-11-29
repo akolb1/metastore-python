@@ -72,7 +72,7 @@ def main():
                                                           partition_keys=client.make_schema(args.partition)))
                 else:
                     logger.debug('creating database %s', args.db)
-                    client.create_database(args.db, args.comment, args.user)
+                    client.create_database(args.db, comment=args.comment, owner=args.user)
             except AlreadyExistsException:
                 logger.error("Object %s.%s already exists", args.db, args.table)
                 stderr.write("Object {}.{} already exists\n".format(args.db, args.table))
