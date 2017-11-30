@@ -81,7 +81,7 @@ def benchmark_list_tables(client, bench, db, table_name, owner, ntables):
 def benchmark_get_table(client, bench, db, table_name, owner):
     _create_many_tables(client, db, table_name, owner, 1)
     try:
-        return bench.bench_simple(lambda: client.get_table(db, table_name+'_0'))
+        return bench.bench_simple(lambda: client.get_table(db, table_name + '_0'))
     finally:
         _drop_many_tables(client, db, table_name, 1)
 
@@ -102,3 +102,51 @@ def _drop_many_tables(client, db, table_name, ntables):
     logger.debug("dropping %d tables for %s.%s", ntables, db, table_name)
     for i in range(ntables):
         client.drop_table(db, '{}_{}'.format(table_name, i))
+
+
+def benchmark_add_partition(client, bench, db, table_name, owner):
+    logger = logging.getLogger(__name__)
+    schema = HMSClient.make_schema(['name'])
+    part_schema = HMSClient.make_schema(['date'])
+    logger.debug("creating table %s.%s", db, table_name)
+    table = HMSClient.make_table(db, table_name, owner=owner, columns=schema,
+                                 partition_keys=part_schema)
+    client.create_table(table)
+
+    tbl = client.get_table(db, table_name)
+    values = ["d"]
+    try:
+        return bench.bench(
+            None,
+            lambda: client.add_partition(tbl, values),
+            lambda: client.drop_partition(db, table_name, values)
+        )
+    finally:
+        logger.debug("dropping table %s.%s", db, table_name)
+        client.drop_table(db, table_name)
+
+
+def benchmark_drop_partition(client, bench, db, table_name, owner):
+    logger = logging.getLogger(__name__)
+    schema = HMSClient.make_schema(['name'])
+    part_schema = HMSClient.make_schema(['date'])
+    logger.debug("creating table %s.%s", db, table_name)
+    table = HMSClient.make_table(db, table_name, owner=owner, columns=schema,
+                                 partition_keys=part_schema)
+    client.create_table(table)
+
+    tbl = client.get_table(db, table_name)
+    values = ["d"]
+    try:
+        return bench.bench(
+            lambda: client.add_partition(tbl, values),
+            lambda: client.drop_partition(db, table_name, values),
+            None
+        )
+    finally:
+        logger.debug("dropping table %s.%s", db, table_name)
+        client.drop_table(db, table_name)
+
+
+def _create_many_partitions(client, db, table_name, count):
+    table = client.get_table(db, table_name)

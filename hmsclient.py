@@ -1,4 +1,5 @@
 import copy
+import logging
 
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
@@ -21,6 +22,8 @@ class HMSClient(object):
         self.__transport = TTransport.TBufferedTransport(TSocket.TSocket(host, int(port)))
         protocol = TBinaryProtocol.TBinaryProtocol(self.__transport)
         self.__client = ThriftHiveMetastore.Client(protocol)
+        self.logger = logging.getLogger(__name__)
+
 
     def open(self):
         self.__transport.open()
@@ -54,6 +57,7 @@ class HMSClient(object):
         :param owner: database user
         :type owner: str
         """
+        self.logger.debug('create_database(%s, %s, %s)', db_name, comment, owner)
         self.__client.create_database(Database(name=db_name, description=comment, ownerName=owner))
 
     def drop_database(self, db_name):
@@ -189,3 +193,6 @@ class HMSClient(object):
 
     def add_partitions(self, partitions):
         self.__client.add_partitions(partitions)
+
+    def drop_partition(self, db_name, table_name, values):
+        self.__client.drop_partition(db_name, table_name, values, True)
