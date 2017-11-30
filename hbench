@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3
+#!/usr/bin/env python3
 
 from __future__ import print_function
 
@@ -35,21 +35,21 @@ def main():
                         help='HMS server address')
     parser.add_argument('-d', '--db', help='database name', default=getuser() + '_test')
     parser.add_argument('-t', '--table', default=getuser() + '_test_table', help='table name')
-    parser.add_argument('-L', '--loglevel', help='Log level', default='error',
-                        choices=['info', 'debug', 'warning', 'error'])
     parser.add_argument('-W', '--warmup', default=WARMUP_CYCLES, type=int, help='Warmup cycles')
     parser.add_argument('-B', '--benchmark', default=BENCH_CYCES, type=int, help='Benchmark cycles')
     parser.add_argument('-N', '--objects', default=OBJECTS, type=int, help='Number of test objects')
     parser.add_argument('--scale', default=SCALE, type=int, help='time units scale, fractions of sec')
     parser.add_argument('-o', '--output', default=stdout, type=argparse.FileType('w'), help='output file')
+    parser.add_argument('-u', '--user', help='user name', default=getuser())
+    parser.add_argument('-v', '--verbose', action='store_true', help='show more information')
+    parser.add_argument('--list', action='store_true', help='list benchmarks instead of running them')
     parser.add_argument('--sanitize', action='store_true', help='Sanitize results')
     parser.add_argument('--savedata', help='location for raw benchmark data')
     parser.add_argument('--delimiter', help='delimiter for CSV files')
     parser.add_argument('--filter', action='append', help='benchmark filter')
     parser.add_argument('--csv', action='store_true', help='Produce CSV output')
-    parser.add_argument('-u', '--user', help='user name', default=getuser())
-    parser.add_argument('-v', '--verbose', action='store_true', help='show more information')
-    parser.add_argument('--list', action='store_true', help='list benchmarks instead of running them')
+    parser.add_argument('-L', '--loglevel', help='Log level', default='error',
+                        choices=['info', 'debug', 'warning', 'error'])
 
     args = parser.parse_args()
 

@@ -8,8 +8,8 @@ from distributionstatistics import Statistics
 # noinspection SpellCheckingInspection
 class MicroBench(object):
 
-    DEFAULT_ITERATIONS=100
-    DEFAULT_WARMUP=15
+    DEFAULT_ITERATIONS = 100
+    DEFAULT_WARMUP = 15
     VERSION = version_info[0]
     timer = time.time
 

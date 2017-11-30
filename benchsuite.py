@@ -46,7 +46,7 @@ class BenchSuite(object):
             :param filter_list: list of regexps
             :return: True iff word matches any of the filters using regexp match
             """
-            for f in filters:
+            for f in filter_list:
                 if re.search(f, word):
                     return True
             return False

@@ -1,10 +1,6 @@
 # noinspection PyCompatibility
 import logging
-
-try:
-    import statistics
-except ImportError:
-    import numpy as statistics
+import statistics
 
 
 class Statistics(object):
@@ -28,10 +24,6 @@ class Statistics(object):
     @property
     def mean(self):
         return statistics.mean(self.data)
-
-    @property
-    def harmonic_mean(self):
-        return statistics.harmonic_mean(self.data)
 
     @property
     def median(self):
