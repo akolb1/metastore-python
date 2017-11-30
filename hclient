@@ -33,8 +33,10 @@ def main():
     parser.add_argument('--force', action='store_true', help='force destructive operation')
     parser.add_argument('-v', '--verbose', action='store_true', help='show more information')
     parser.add_argument('command',
-                        choices=['listdb', 'list', 'create', 'drop', 'rm'],
+                        choices=['add', 'listdb', 'list', 'create', 'drop', 'rm'],
                         help='HMS action')
+    # Remaining params
+    parser.add_argument('params', argparse.REMAINDER)
 
     args = parser.parse_args()
 
@@ -43,62 +45,83 @@ def main():
         raise ValueError('Invalid log level: %s' % args.loglevel)
     logging.basicConfig(level=numeric_level)
 
-    logger = logging.getLogger(__name__)
-
     with HMSClient(args.host) as client:
         if args.command == 'listdb':
-            for d in client.get_all_databases():
-                if not args.db or re.search(args.db, d):
-                    print(d)
-            return 0
-
+            return cmd_listdb(client, args)
         if args.command == 'list':
-            for db in client.get_all_databases():
-                if not args.db or re.search(args.db, db):
-                    for t in client.get_all_tables(db):
-                        if not args.table or re.search(args.table, t):
-                            print('{}.{}'.format(db, t))
-                            if args.verbose:
-                                tbl = client.get_table(db, t)
-                                print('\towner: {}, location: {}'.format(tbl.owner, tbl.sd.location))
-                                print('\t\t', ', '.join(client.parse_schema(tbl.sd.cols)))
-
-            return 0
-
+            return cmd_list(client, args)
         if args.command == 'create':
-            try:
-                if args.table:
-                    logger.debug('creating table %s.%s as user %s', args.table, args.db, args.user)
-                    client.create_table(client.make_table(args.db,
-                                                          args.table,
-                                                          owner=args.user,
-                                                          columns=client.make_schema(args.column),
-                                                          partition_keys=client.make_schema(args.partition)))
-                else:
-                    logger.debug('creating database %s', args.db)
-                    client.create_database(args.db, comment=args.comment, owner=args.user)
-            except AlreadyExistsException:
-                logger.error("Object %s.%s already exists", args.db, args.table)
-                stderr.write("Object {}.{} already exists\n".format(args.db, args.table))
-                return 1
-
-            return 0
-
+            return cmd_create(client, args)
         if args.command in ['drop', 'rm']:
-            for db in client.get_all_databases():
-                if not args.db or re.search(args.db, db):
-                    for t in client.get_all_tables(db):
-                        if not args.table or re.search(args.table, t):
-                            if args.force or query_yes_no('drop table {}.{}'.format(db, t)):
-                                logger.info('dropping table %s.%s', db, t)
-                                client.drop_table(db, t)
-                            else:
-                                logger.info('skipping table %s.%s', db, t)
-
-            return 0
+            return cmd_drop(client, args)
 
     return 0
 
+
+def cmd_list(client, args):
+    for db in client.get_all_databases():
+        if not args.db or re.search(args.db, db):
+            for t in client.get_all_tables(db):
+                if not args.table or re.search(args.table, t):
+                    print('{}.{}'.format(db, t))
+                    if args.verbose:
+                        tbl = client.get_table(db, t)
+                        print('\towner: {}, location: {}'.format(tbl.owner, tbl.sd.location))
+                        print('\t    ', '\n\t    '.join(client.parse_schema(tbl.sd.cols)))
+    return 0
+
+
+def cmd_listdb(client, arg):
+    for d in client.get_all_databases():
+        if not args.db or re.search(args.db, d):
+            print(d)
+    return 0
+
+def cmd_create(client, args):
+    logger = logging.getLogger(__name__)
+    try:
+        if args.table:
+            logger.debug('creating table %s.%s as user %s', args.table, args.db, args.user)
+            client.create_table(client.make_table(args.db,
+                                                  args.table,
+                                                  owner=args.user,
+                                                  columns=client.make_schema(args.column),
+                                                  partition_keys=client.make_schema(args.partition)))
+        else:
+            logger.debug('creating database %s', args.db)
+            client.create_database(args.db, comment=args.comment, owner=args.user)
+    except AlreadyExistsException:
+        logger.error("Object %s.%s already exists", args.db, args.table)
+        stderr.write("Object {}.{} already exists\n".format(args.db, args.table))
+        return 1
+
+    return 0
+
+
+def cmd_drop(client, args):
+    logger = logging.getLogger(__name__)
+    for db in client.get_all_databases():
+        if not args.db or re.search(args.db, db):
+            for t in client.get_all_tables(db):
+                if not args.table or re.search(args.table, t):
+                    if args.force or query_yes_no('drop table {}.{}'.format(db, t)):
+                        logger.info('dropping table %s.%s', db, t)
+                        client.drop_table(db, t)
+                    else:
+                        logger.info('skipping table %s.%s', db, t)
+    return 0
+
+
+def cmd_add_partition(client, args):
+    """
+
+    :param client:
+    :type client: HMSClient
+    :param cmd:
+    :return:
+    """
+    client.add_partition(client.get_table(args.db, args.table), args.params)
+    return 0
 
 def query_yes_no(question):
     """

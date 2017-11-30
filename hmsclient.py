@@ -1,8 +1,10 @@
+import copy
+
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
 
 from hive_metastore import ThriftHiveMetastore
-from hive_metastore.ttypes import Database, StorageDescriptor, SerDeInfo, Table, FieldSchema
+from hive_metastore.ttypes import Database, StorageDescriptor, SerDeInfo, Table, FieldSchema, Partition
 
 SIMPLE_SERDE = 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe'
 INPUT_FORMAT = 'org.apache.hadoop.mapred.TextInputFormat'
@@ -122,7 +124,7 @@ class HMSClient(object):
         :type schemas: list[FieldSchema]
         :return:
         """
-        return map(lambda s: '{}:{}'.format(s.name, s.type), schemas)
+        return map(lambda s: '{}\t{}'.format(s.name, s.type), schemas)
 
     def create_table(self, table):
         self.__client.create_table(table)
@@ -152,3 +154,38 @@ class HMSClient(object):
         """
         return self.__client.get_table(db_name, table_name)
         pass
+
+    @staticmethod
+    def make_partition(table, values):
+        """
+
+        :param table:
+        :type table: Table
+        :param values:
+        :type values: list[str]
+        :return:
+        :rtype: Partition
+        """
+        partition_names = [k.name for k in table.partitionKeys]
+        if len(partition_names) != len(values):
+            raise ValueError('Partition values do not match table schema')
+        kv = [partition_names[i] + '=' + values[i] for i in range(len(partition_names))]
+
+        sd = copy.deepcopy(table.sd)
+        sd.location = sd.location + '/' + '/'.join(kv)
+
+        return Partition(values=values, dbName=table.dbName, tableName=table.tableName, sd=sd)
+
+    def add_partition(self, table, values):
+        """
+        Add partition
+
+        :param table:
+        :type table: Table
+        :param values:
+        :type values: list[str]
+        """
+        self.__client.add_partition(self.make_partition(table, values))
+
+    def add_partitions(self, partitions):
+        self.__client.add_partitions(partitions)
