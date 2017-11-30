@@ -10,7 +10,7 @@ from os import path as ospath
 from sys import stdout
 
 from benchmarks import benchmark_list_databases, benchmark_create_table, benchmark_drop_table, benchmark_list_tables, \
-    benchmark_get_table, benchmark_add_partition, benchmark_drop_partition
+    benchmark_get_table, benchmark_add_partition, benchmark_drop_partition, benchmark_get_partitions
 from hmsclient import HMSClient
 from microbench import MicroBench
 from benchsuite import BenchSuite
@@ -120,6 +120,22 @@ def main():
                           args.db,
                           args.table,
                           args.user))
+            suite.add('getPartition',
+                      lambda b: benchmark_get_partitions(
+                          client,
+                          b,
+                          args.db,
+                          args.table,
+                          args.user,
+                          1))
+            suite.add('getPartitions({})'.format(args.objects),
+                      lambda b: benchmark_get_partitions(
+                          client,
+                          b,
+                          args.db,
+                          args.table,
+                          args.user,
+                          args.objects))
 
             if args.list:
                 for name in suite.list(args.filter):

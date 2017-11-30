@@ -148,5 +148,26 @@ def benchmark_drop_partition(client, bench, db, table_name, owner):
         client.drop_table(db, table_name)
 
 
-def _create_many_partitions(client, db, table_name, count):
-    table = client.get_table(db, table_name)
+def _create_many_partitions(client, db, table_name, owner, count):
+    logger = logging.getLogger(__name__)
+    logger.debug("creating %d partitions for table %s.%s", count, db, table_name)
+    schema = HMSClient.make_schema(['name'])
+    part_schema = HMSClient.make_schema(['date'])
+    logger.debug("creating table %s.%s", db, table_name)
+    table = HMSClient.make_table(db, table_name, owner=owner, columns=schema,
+                                 partition_keys=part_schema)
+    client.create_table(table)
+    tbl = client.get_table(db, table_name)
+    partitions = [client.make_partition(tbl, ["d"+str(i)]) for i in range(count)]
+    client.add_partitions(partitions)
+
+
+def benchmark_get_partitions(client, bench, db, table_name, owner, count):
+    logger = logging.getLogger(__name__)
+    _create_many_partitions(client, db, table_name, owner, count)
+    try:
+        logger.debug("measuring time to list %s partitions", count)
+        return bench.bench_simple(lambda: client.get_partitions(db, table_name))
+    finally:
+        logger.debug("dropping table %s.%s", db, table_name)
+        client.drop_table(db, table_name)

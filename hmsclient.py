@@ -24,7 +24,6 @@ class HMSClient(object):
         self.__client = ThriftHiveMetastore.Client(protocol)
         self.logger = logging.getLogger(__name__)
 
-
     def open(self):
         self.__transport.open()
         self.__isOpened = True
@@ -133,7 +132,6 @@ class HMSClient(object):
     def create_table(self, table):
         self.__client.create_table(table)
 
-
     def drop_table(self, db_name, table_name):
         """
         Drop Hive table
@@ -193,6 +191,9 @@ class HMSClient(object):
 
     def add_partitions(self, partitions):
         self.__client.add_partitions(partitions)
+
+    def get_partitions(self, db_name, table_name):
+        return self.__client.get_partitions(db_name, table_name, -1)
 
     def drop_partition(self, db_name, table_name, values):
         self.__client.drop_partition(db_name, table_name, values, True)
