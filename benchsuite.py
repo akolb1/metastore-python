@@ -110,6 +110,6 @@ class BenchSuite(object):
                 '{:g}'.format(result.median * self.__scale),
                 '{:g}'.format(result.min * self.__scale),
                 '{:g}'.format(result.max * self.__scale),
-                '{:g}'.format(result.stdev) * 100 / mean,
+                '{:g}'.format(result.stdev * 100 / mean),
             ]
             writer.writerow([name] + values)
