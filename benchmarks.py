@@ -148,6 +148,53 @@ def benchmark_drop_partition(client, bench, db, table_name, owner):
         client.drop_table(db, table_name)
 
 
+def benchmark_add_partitions(client, bench, db, table_name, owner, count):
+    logger = logging.getLogger(__name__)
+    schema = HMSClient.make_schema(['name'])
+    part_schema = HMSClient.make_schema(['date'])
+    logger.debug("creating table %s.%s", db, table_name)
+    table = HMSClient.make_table(db, table_name, owner=owner, columns=schema,
+                                 partition_keys=part_schema)
+    client.create_table(table)
+
+    tbl = client.get_table(db, table_name)
+    partitions = [client.make_partition(tbl, ["d" + str(i)]) for i in range(count)]
+    try:
+        return bench.bench(
+            None,
+            lambda: client.add_partitions(partitions),
+            lambda: client.drop_all_partitions(db, table_name)
+        )
+    finally:
+        logger.debug("dropping table %s.%s", db, table_name)
+        client.drop_table(db, table_name)
+
+
+def benchmark_drop_partitions(client, bench, db, table_name, owner, count, need_result=None):
+    logger = logging.getLogger(__name__)
+    schema = HMSClient.make_schema(['name'])
+    part_schema = HMSClient.make_schema(['date'])
+    logger.debug("creating table %s.%s", db, table_name)
+    table = HMSClient.make_table(db, table_name, owner=owner, columns=schema,
+                                 partition_keys=part_schema)
+    client.create_table(table)
+
+    tbl = client.get_table(db, table_name)
+    names = ["date=d" + str(i) for i in range(count)]
+    print(names)
+
+    partitions = [client.make_partition(tbl, ["d" + str(i)]) for i in range(count)]
+    try:
+        return bench.bench(
+            lambda: client.add_partitions(partitions),
+            lambda: client.drop_partitions(db, names, need_result),
+            None
+        )
+    finally:
+        logger.debug("dropping table %s.%s", db, table_name)
+        client.drop_table(db, table_name)
+
+
 def _create_many_partitions(client, db, table_name, owner, count):
     logger = logging.getLogger(__name__)
     logger.debug("creating %d partitions for table %s.%s", count, db, table_name)
@@ -158,7 +205,7 @@ def _create_many_partitions(client, db, table_name, owner, count):
                                  partition_keys=part_schema)
     client.create_table(table)
     tbl = client.get_table(db, table_name)
-    partitions = [client.make_partition(tbl, ["d"+str(i)]) for i in range(count)]
+    partitions = [client.make_partition(tbl, ["d" + str(i)]) for i in range(count)]
     client.add_partitions(partitions)
 
 
@@ -171,3 +218,18 @@ def benchmark_get_partitions(client, bench, db, table_name, owner, count):
     finally:
         logger.debug("dropping table %s.%s", db, table_name)
         client.drop_table(db, table_name)
+
+
+def benchmark_get_partition_names(client, bench, db, table_name, owner, count):
+    logger = logging.getLogger(__name__)
+    _create_many_partitions(client, db, table_name, owner, count)
+    try:
+        logger.debug("measuring time to get names for %s partitions", count)
+        return bench.bench_simple(lambda: client.get_partition_names(db, table_name))
+    finally:
+        logger.debug("dropping table %s.%s", db, table_name)
+        client.drop_table(db, table_name)
+
+
+def benchmark_get_curr_notification(client, bench):
+    return bench.bench_simple(lambda: client.get_current_notification_id())

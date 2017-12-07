@@ -37,6 +37,7 @@ class BenchSuite(object):
         :return: List of matching benchmarks
         :rtype: list[str]
         """
+
         def matches(word, filter_list):
             """
             :param word: word to check
@@ -66,16 +67,28 @@ class BenchSuite(object):
     def result(self):
         return self.__result
 
+    def _min_mean(self):
+        """
+        :return: Return minimum Mean value across all suits
+        :rtype: float
+        """
+        return min([data.mean for data in self.__result.values()])
+
     def print(self, file):
-        file.write('{:20s}{:8s}{:8s}{:8s}{:8s}{:8s}\n'.format('Name', 'Mean', 'Med', 'Min', 'Max', 'Stdev%'))
+        file.write('{:30s}{:8s} {:8s} {:8s} {:8s} {:8s} {:8s}\n'.format('Name', 'AMean',
+                                                                        'Mean', 'Med', 'Min', 'Max', 'Stdev%'))
+        min_val = self._min_mean()
         for name in sorted(self.__result.keys()):
             result = self.__result[name]
-            file.write('{:20s}{:<8.3g}{:<8.3g}{:<8.3g}{:<8.3g}{:<8.3g}\n'.format(name,
-                                                                                 result.mean * self.__scale,
-                                                                                 result.median * self.__scale,
-                                                                                 result.min * self.__scale,
-                                                                                 result.max * self.__scale,
-                                                                                 result.stdev * 100 / result.mean))
+            mean = result.mean
+            file.write('{:30s}{:<8.3g} {:<8.3g} {:<8.3g} {:<8.3g} {:<8.3g} {:<8.3g}\n'
+                       .format(name,
+                               (mean - min_val) * self.__scale,
+                               mean * self.__scale,
+                               result.median * self.__scale,
+                               result.min * self.__scale,
+                               result.max * self.__scale,
+                               result.stdev * 100 / mean))
 
     def print_csv(self, name, delimiter='\t'):
         if isinstance(name, str):
@@ -85,16 +98,18 @@ class BenchSuite(object):
             self._print_csv(name, delimiter)
 
     def _print_csv(self, file, delimiter):
+        min_val = self._min_mean()
         writer = csv.writer(file, delimiter=delimiter, quotechar='|', quoting=csv.QUOTE_MINIMAL)
-        writer.writerow(['Name', 'Mean', 'Med', 'Min', 'Max', 'Stdev', 'Var'])
+        writer.writerow(['Name', 'AMean', 'Mean', 'Med', 'Min', 'Max', 'Stdev%'])
         for name in sorted(self.__result.keys()):
             result = self.__result[name]
+            mean = result.mean
             values = [
-                '{:g}'.format(result.mean * self.__scale),
+                '{:g}'.format((mean - min_val) * self.__scale),
+                '{:g}'.format(mean * self.__scale),
                 '{:g}'.format(result.median * self.__scale),
                 '{:g}'.format(result.min * self.__scale),
                 '{:g}'.format(result.max * self.__scale),
-                '{:g}'.format(result.stdev),
-                '{:g}'.format(sqrt(result.pvariance)),
+                '{:g}'.format(result.stdev) * 100 / mean,
             ]
             writer.writerow([name] + values)

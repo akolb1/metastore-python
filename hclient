@@ -25,15 +25,17 @@ def main():
     parser.add_argument('-d', '--db', help='database name')
     parser.add_argument('-t', '--table', help='table name')
     parser.add_argument('-C', '--column', action='append', help='column name:type')
-    parser.add_argument('-P', '--partition', action='append', help='partition name:type')
+    parser.add_argument('-P', '--partition', dest='partitions', action='append', help='partition name:type')
     parser.add_argument('-u', '--user', help='user name', default=getuser())
     parser.add_argument('-c', '--comment', help='comment')
     parser.add_argument('-L', '--loglevel', help='Log level', default='error',
                         choices=['info', 'debug', 'warning', 'error'])
     parser.add_argument('--force', action='store_true', help='force destructive operation')
-    parser.add_argument('-v', '--verbose', action='store_true', help='show more information')
+    parser.add_argument('-v', '--verbose', action='count', help='show more information')
+    parser.add_argument('--show-partitions', dest='showpartitions',
+                        action='store_true', help='show partitions information')
     parser.add_argument('command',
-                        choices=['add', 'listdb', 'list', 'create', 'drop', 'rm'],
+                        choices=['add', 'listdb', 'currnotification', 'list', 'create', 'drop', 'rm'],
                         help='HMS action')
     # Remaining params
     # parser.add_argument('params', nargs=argparse.REMAINDER)
@@ -56,6 +58,8 @@ def main():
             return cmd_drop(client, args)
         if args.command == 'add':
             return cmd_add_partition(client, args)
+        if args.command == 'currnotification':
+            return cmd_get_current_notification(client, args)
 
     return 0
 
@@ -66,10 +70,14 @@ def cmd_list(client, args):
             for t in client.get_all_tables(db):
                 if not args.table or re.search(args.table, t):
                     print('{}.{}'.format(db, t))
-                    if args.verbose:
+                    if not args.verbose and args.showpartitions:
+                        print('\tparts:\t', '\n\t\t'.join(client.get_partition_names(db, t)))
+                    elif args.verbose:
                         tbl = client.get_table(db, t)
                         print('\towner: {}, location: {}'.format(tbl.owner, tbl.sd.location))
                         print('\t    ', '\n\t    '.join(client.parse_schema(tbl.sd.cols)))
+                        if args.verbose and args.verbose > 1:
+                            print('\t\t\t', '\n\t\t\t'.join(client.get_partition_names(db, t)))
     return 0
 
 
@@ -89,7 +97,7 @@ def cmd_create(client, args):
                                                   args.table,
                                                   owner=args.user,
                                                   columns=client.make_schema(args.column),
-                                                  partition_keys=client.make_schema(args.partition)))
+                                                  partition_keys=client.make_schema(args.partitions)))
         else:
             logger.debug('creating database %s', args.db)
             client.create_database(args.db, comment=args.comment, owner=args.user)
@@ -103,10 +111,10 @@ def cmd_create(client, args):
 
 def cmd_drop(client, args):
     logger = logging.getLogger(__name__)
-    if args.partition:
-        logger.debug('drop partition %s.%s %s', args.db, args.table, args.partition)
+    if args.partitions:
+        logger.debug('drop partition %s.%s %s', args.db, args.table, args.partitions)
         try:
-            client.drop_partition(args.db, args.table, args.partition)
+            client.drop_partitions(args.db, args.table, args.partitions)
         except NoSuchObjectException:
             stderr.write("No such partition\n")
             return 1
@@ -132,11 +140,16 @@ def cmd_add_partition(client, args):
     :return:
     """
     try:
-        client.add_partition(client.get_table(args.db, args.table), args.partition)
+        client.add_partition(client.get_table(args.db, args.table), args.partitions)
     except AlreadyExistsException:
         stderr.write("Such partition already exists\n")
         return 1
 
+    return 0
+
+
+def cmd_get_current_notification(client, args):
+    print(client.get_current_notification_id())
     return 0
 
 

@@ -5,7 +5,8 @@ from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
 
 from hive_metastore import ThriftHiveMetastore
-from hive_metastore.ttypes import Database, StorageDescriptor, SerDeInfo, Table, FieldSchema, Partition
+from hive_metastore.ttypes import Database, StorageDescriptor, SerDeInfo, Table, FieldSchema, Partition, \
+    DropPartitionsRequest, RequestPartsSpec
 
 SIMPLE_SERDE = 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe'
 INPUT_FORMAT = 'org.apache.hadoop.mapred.TextInputFormat'
@@ -192,8 +193,39 @@ class HMSClient(object):
     def add_partitions(self, partitions):
         self.__client.add_partitions(partitions)
 
-    def get_partitions(self, db_name, table_name):
-        return self.__client.get_partitions(db_name, table_name, -1)
+    def get_partitions(self, db_name, table_name, count=-1):
+        return self.__client.get_partitions(db_name, table_name, count)
 
     def drop_partition(self, db_name, table_name, values):
         self.__client.drop_partition(db_name, table_name, values, True)
+
+    def get_partition_names(self, db_name, table_name, count=-1):
+        partitions = self.__client.get_partition_names(db_name, table_name, count)
+        return partitions if partitions else []
+
+    def drop_partitions(self, db_name, table_name, names, need_result=None):
+        """
+        Drop specified partitions from the table
+
+        :param db_name: Database name
+        :type db_name: str
+        :param table_name:
+        :type table_name: str
+        :param names: Partition names
+        :type names: list[str]
+        :param need_result: If true, return drop results
+        :return: drop results
+        """
+        if not names:
+            return None
+        return self.__client.drop_partitions_req(DropPartitionsRequest(db_name, table_name,
+                                                                       RequestPartsSpec(names), need_result))
+
+    def drop_all_partitions(self, db_name, table_name, need_result=None):
+        return self.drop_partitions(db_name, table_name,
+                                    self.get_partition_names(db_name, table_name),
+                                    need_result)
+
+    def get_current_notification_id(self):
+        return self.__client.get_current_notificationEventId().eventId
+
