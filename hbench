@@ -13,6 +13,7 @@ import logging
 from getpass import getuser
 
 from os import path as ospath
+import distutils.dir_util
 from sys import stdout
 
 from benchmarks import benchmark_list_databases, benchmark_create_table, benchmark_drop_table, benchmark_list_tables, \
@@ -204,9 +205,11 @@ def main():
                 suite.print(args.output)
 
             if args.savedata:
+                data_dir = args.savedata
+                distutils.dir_util.mkpath(data_dir)
                 results = suite.result
                 for name in sorted(results.keys()):
-                    save_data(ospath.join(args.savedata, name + ".out"), results[name].data)
+                    save_data(ospath.join(data_dir, name), results[name].data)
         finally:
             cleanup(client, args)
 
