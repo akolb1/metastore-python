@@ -2,8 +2,6 @@ from __future__ import print_function
 
 import csv
 import logging
-from math import sqrt
-
 import re
 
 from microbench import MicroBench
