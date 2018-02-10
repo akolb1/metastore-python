@@ -58,8 +58,7 @@ OBJECTS = 1000
 
 def main():
     parser = argparse.ArgumentParser(description='Hive Metastore benchmarking tool')
-    parser.add_argument('-H', '--host', default=_default_host,
-                        help='HMS server address')
+    parser.add_argument('-H', '--host', help='HMS server address')
     parser.add_argument('-d', '--db', help='database name', default=getuser() + '_test')
     parser.add_argument('-t', '--table', default=getuser() + '_test_table', help='table name')
     parser.add_argument('-W', '--warmup', default=WARMUP_CYCLES, type=int, help='Warmup cycles')
@@ -67,6 +66,7 @@ def main():
     parser.add_argument('-N', '--objects', default=OBJECTS, type=int, help='Number of test objects')
     parser.add_argument('--scale', default=SCALE, type=int, help='time units scale, fractions of sec')
     parser.add_argument('-o', '--output', default=stdout, type=argparse.FileType('w'), help='output file')
+    parser.add_argument('-P', '--port', dest='port', type=int, help='HMS thrift port')
     parser.add_argument('-u', '--user', help='user name', default=getuser())
     parser.add_argument('-v', '--verbose', action='store_true', help='show more information')
     parser.add_argument('--list', action='store_true', help='list benchmarks instead of running them')
@@ -92,7 +92,7 @@ def main():
     bench = MicroBench(args.warmup, args.benchmark)
     suite = BenchSuite(bench, args.scale, sanitize=args.sanitize)
 
-    with HMSClient(args.host) as client:
+    with HMSClient(args.host, args.port) as client:
         setup(client, args)
         try:
             suite.add('listDb', lambda b: benchmark_list_databases(client, b))

@@ -35,12 +35,12 @@ _LIST_COMMAND = 'list'
 
 def main():
     parser = argparse.ArgumentParser(description='Hive Metastore client')
-    parser.add_argument('-H', '--host', dest='host', default=_default_host,
-                        help='HMS server address')
+    parser.add_argument('-H', '--host', dest='host', help='HMS server address')
     parser.add_argument('-d', '--db', help='database name')
     parser.add_argument('-t', '--table', help='table name')
     parser.add_argument('-C', '--column', action='append', help='column name:type')
-    parser.add_argument('-P', '--partition', dest='partitions', action='append', help='partition name:type')
+    parser.add_argument('-P', '--port', dest='port', type=int, help='HMS thrift port')
+    parser.add_argument('-p', '--partition', dest='partitions', action='append', help='partition name:type')
     parser.add_argument('-u', '--user', help='user name', default=getuser())
     parser.add_argument('-c', '--comment', help='comment')
     parser.add_argument('-L', '--loglevel', help='Log level', default='error',
@@ -62,7 +62,7 @@ def main():
         raise ValueError('Invalid log level: %s' % args.loglevel)
     logging.basicConfig(level=numeric_level)
 
-    with HMSClient(args.host) as client:
+    with HMSClient(args.host, args.port) as client:
         if args.command == 'listdb':
             return cmd_listdb(client, args)
         if args.command == 'list':

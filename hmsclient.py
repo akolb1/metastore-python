@@ -15,6 +15,7 @@
 
 import copy
 import logging
+from os import environ
 
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
@@ -34,11 +35,29 @@ class HMSClient(object):
     __transport = None
     __isOpened = False
 
-    def __init__(self, host, port=DEFAULT_PORT):
+    def __init__(self, host, port):
+        self.logger = logging.getLogger(__name__)
+
+        if not host:
+            host = environ.get("HMS_HOST")
+
+        if not host:
+            host = 'localhost'
+
+        if ':' in host:
+            parts = host.split(':')
+            host = parts[0]
+            port = int(parts[1])
+
+        if not port:
+            port = environ.get("HMS_PORT")
+
+        if not port:
+            port = DEFAULT_PORT
+
         self.__transport = TTransport.TBufferedTransport(TSocket.TSocket(host, int(port)))
         protocol = TBinaryProtocol.TBinaryProtocol(self.__transport)
         self.__client = ThriftHiveMetastore.Client(protocol)
-        self.logger = logging.getLogger(__name__)
 
     def open(self):
         self.__transport.open()
