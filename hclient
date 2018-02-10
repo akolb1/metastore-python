@@ -50,7 +50,7 @@ def main():
     parser.add_argument('--show-partitions', dest='showpartitions',
                         action='store_true', help='show partitions information')
     parser.add_argument('command',
-                        choices=['add', 'listdb', 'currnotification', 'list', 'create', 'drop', 'rm'],
+                        choices=['add', 'listdb', 'currnotification', 'list', 'create', 'drop', 'dropdb', 'rm'],
                         help='HMS action')
     # Remaining params
     # parser.add_argument('params', nargs=argparse.REMAINDER)
@@ -75,6 +75,8 @@ def main():
             return cmd_add_partition(client, args)
         if args.command == 'currnotification':
             return cmd_get_current_notification(client, args)
+        if args.command == 'dropdb':
+            return cmd_drop_database(client, args)
 
     return 0
 
@@ -165,6 +167,11 @@ def cmd_add_partition(client, args):
 
 def cmd_get_current_notification(client, args):
     print(client.get_current_notification_id())
+    return 0
+
+
+def cmd_drop_database(client, args):
+    client.drop_database(args.db)
     return 0
 
 
