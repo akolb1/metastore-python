@@ -21,7 +21,7 @@ from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
 
 from hive_metastore import ThriftHiveMetastore
-from hive_metastore.ttypes import Database, StorageDescriptor, SerDeInfo, Table, FieldSchema, Partition, \
+from hive_metastore.ttypes import Database, Table, FieldSchema, Partition, \
     DropPartitionsRequest, RequestPartsSpec
 
 SIMPLE_SERDE = 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe'
@@ -115,32 +115,6 @@ class HMSClient(object):
         :type table: Table
         """
         self.__client.alter_table(db_name, table_name, table)
-
-    @staticmethod
-    def make_table(db_name, table_name, owner='', columns=None, partition_keys=None):
-        """
-        Create Table object
-
-        :param db_name: Database name
-        :type db_name: str
-        :param table_name: Table name
-        :type table_name: str
-        :param columns:
-        :param owner: Table owner
-        :type owner: str
-        :param partition_keys:
-        :return: Table object
-        :rtype: Table
-        """
-        sd = StorageDescriptor(
-            cols=columns if columns else [],
-            serdeInfo=SerDeInfo(name=table_name, serializationLib=SIMPLE_SERDE),
-            inputFormat=INPUT_FORMAT,
-            outputFormat=OUTPUT_FORMAT
-        )
-        return Table(tableName=table_name, dbName=db_name, owner=owner,
-                     partitionKeys=partition_keys,
-                     sd=sd)
 
     @staticmethod
     def make_schema(params):

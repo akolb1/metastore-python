@@ -21,6 +21,7 @@ import logging
 import copy
 
 from hmsclient import HMSClient
+from tablebuilder import TableBuilder
 
 
 def benchmark_list_databases(client, bench):
@@ -43,7 +44,10 @@ def benchmark_create_table(client, bench, db, table_name, owner):
     :type owner: str
     """
     schema = HMSClient.make_schema(['name'])
-    table = HMSClient.make_table(db, table_name, owner=owner, columns=schema)
+    table = TableBuilder(db, table_name)\
+        .set_owner(owner)\
+        .set_columns(schema)\
+        .build()
 
     return bench.bench(
         None,
@@ -68,7 +72,10 @@ def benchmark_drop_table(client, bench, db, table_name, owner):
     :type owner: str
     """
     schema = HMSClient.make_schema(['name'])
-    table = HMSClient.make_table(db, table_name, owner=owner, columns=schema)
+    table = TableBuilder(db, table_name)\
+        .set_owner(owner)\
+        .set_columns(schema)\
+        .build()
 
     return bench.bench(
         lambda: client.create_table(table),
@@ -109,8 +116,10 @@ def _create_many_tables(client, db, table_name, owner, ntables):
     logger = logging.getLogger(__name__)
     logger.debug("creating %d tables for %s.%s", ntables, db, table_name)
     for i in range(ntables):
-        table = HMSClient.make_table(db, '{}_{}'.format(table_name, i),
-                                     owner=owner, columns=schema)
+        table = TableBuilder(db, '{}_{}'.format(table_name, i)) \
+            .set_owner(owner) \
+            .set_columns(schema) \
+            .build()
         client.create_table(table)
 
 
@@ -126,8 +135,11 @@ def benchmark_add_partition(client, bench, db, table_name, owner):
     schema = HMSClient.make_schema(['name'])
     part_schema = HMSClient.make_schema(['date'])
     logger.debug("creating table %s.%s", db, table_name)
-    table = HMSClient.make_table(db, table_name, owner=owner, columns=schema,
-                                 partition_keys=part_schema)
+    table = TableBuilder(db, table_name)\
+        .set_owner(owner)\
+        .set_columns(schema)\
+        .set_partition_keys(part_schema)\
+        .build()
     client.create_table(table)
 
     tbl = client.get_table(db, table_name)
@@ -148,8 +160,11 @@ def benchmark_drop_partition(client, bench, db, table_name, owner):
     schema = HMSClient.make_schema(['name'])
     part_schema = HMSClient.make_schema(['date'])
     logger.debug("creating table %s.%s", db, table_name)
-    table = HMSClient.make_table(db, table_name, owner=owner, columns=schema,
-                                 partition_keys=part_schema)
+    table = TableBuilder(db, table_name)\
+        .set_owner(owner)\
+        .set_columns(schema)\
+        .set_partition_keys(part_schema)\
+        .build()
     client.create_table(table)
 
     tbl = client.get_table(db, table_name)
@@ -170,8 +185,11 @@ def benchmark_add_partitions(client, bench, db, table_name, owner, count):
     schema = HMSClient.make_schema(['name'])
     part_schema = HMSClient.make_schema(['date'])
     logger.debug("creating table %s.%s", db, table_name)
-    table = HMSClient.make_table(db, table_name, owner=owner, columns=schema,
-                                 partition_keys=part_schema)
+    table = TableBuilder(db, table_name)\
+        .set_owner(owner)\
+        .set_columns(schema)\
+        .set_partition_keys(part_schema)\
+        .build()
     client.create_table(table)
 
     tbl = client.get_table(db, table_name)
@@ -192,8 +210,11 @@ def benchmark_drop_partitions(client, bench, db, table_name, owner, count, need_
     schema = HMSClient.make_schema(['name'])
     part_schema = HMSClient.make_schema(['date'])
     logger.debug("creating table %s.%s", db, table_name)
-    table = HMSClient.make_table(db, table_name, owner=owner, columns=schema,
-                                 partition_keys=part_schema)
+    table = TableBuilder(db, table_name)\
+        .set_owner(owner)\
+        .set_columns(schema)\
+        .set_partition_keys(part_schema)\
+        .build()
     client.create_table(table)
 
     tbl = client.get_table(db, table_name)
@@ -218,8 +239,11 @@ def _create_many_partitions(client, db, table_name, owner, count):
     schema = HMSClient.make_schema(['name'])
     part_schema = HMSClient.make_schema(['date'])
     logger.debug("creating table %s.%s", db, table_name)
-    table = HMSClient.make_table(db, table_name, owner=owner, columns=schema,
-                                 partition_keys=part_schema)
+    table = TableBuilder(db, table_name)\
+        .set_owner(owner)\
+        .set_columns(schema)\
+        .set_partition_keys(part_schema)\
+        .build()
     client.create_table(table)
     tbl = client.get_table(db, table_name)
     partitions = [client.make_partition(tbl, ["d" + str(i)]) for i in range(count)]

@@ -27,6 +27,7 @@ import re
 
 from hive_metastore.ttypes import AlreadyExistsException, NoSuchObjectException
 from hmsclient import HMSClient
+from tablebuilder import TableBuilder
 
 _default_host = 'localhost'
 _default_port = 9083
@@ -110,11 +111,13 @@ def cmd_create(client, args):
     try:
         if args.table:
             logger.debug('creating table %s.%s as user %s', args.table, args.db, args.user)
-            client.create_table(client.make_table(args.db,
-                                                  args.table,
-                                                  owner=args.user,
-                                                  columns=client.make_schema(args.column),
-                                                  partition_keys=client.make_schema(args.partitions)))
+            table = TableBuilder(args.db, args.table)\
+                .set_owner(args.user) \
+                .set_columns(client.make_schema(args.column))\
+                .set_partition_keys(client.make_schema(args.partitions))\
+                .build()
+
+            client.create_table(table)
         else:
             logger.debug('creating database %s', args.db)
             client.create_database(args.db, comment=args.comment, owner=args.user)
