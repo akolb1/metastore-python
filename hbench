@@ -33,7 +33,7 @@ from sys import stdout
 
 from benchmarks import benchmark_list_databases, benchmark_create_table, benchmark_drop_table, benchmark_list_tables, \
     benchmark_get_table, benchmark_add_partition, benchmark_drop_partition, benchmark_get_partitions, \
-    benchmark_get_partition_names, benchmark_drop_partitions, benchmark_get_curr_notification
+    benchmark_get_partition_names, benchmark_drop_partitions, benchmark_get_curr_notification, benchmark_rename_table
 from hmsclient import HMSClient
 from microbench import MicroBench
 from benchsuite import BenchSuite
@@ -188,7 +188,6 @@ def main():
                           args.table,
                           args.user,
                           args.objects))
-            """
             suite.add('dropPartitions.{}'.format(args.objects),
                       lambda b: benchmark_drop_partitions(
                           client,
@@ -206,7 +205,20 @@ def main():
                           args.user,
                           args.objects,
                           True))
-            """
+            suite.add('renameTable',
+                      lambda b: benchmark_rename_table(
+                          client,
+                          b,
+                          args.db,
+                          args.user,
+                          1))
+            suite.add('renameTable.{}'.format(args.objects),
+                      lambda b: benchmark_rename_table(
+                          client,
+                          b,
+                          args.db,
+                          args.user,
+                          args.objects))
 
             if args.list:
                 for name in suite.list(args.filter):

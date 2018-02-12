@@ -18,6 +18,8 @@ Actual benchmarks
 """
 import logging
 
+import copy
+
 from hmsclient import HMSClient
 
 
@@ -248,3 +250,24 @@ def benchmark_get_partition_names(client, bench, db, table_name, owner, count):
 
 def benchmark_get_curr_notification(client, bench):
     return bench.bench_simple(lambda: client.get_current_notification_id())
+
+
+def benchmark_rename_table(client, bench, db, owner, count):
+    logger = logging.getLogger(__name__)
+    table_name = "bench_table"
+    new_name = table_name + "_renamed"
+    _create_many_partitions(client, db, table_name, owner, count)
+    table = client.get_table(db, table_name)
+    table.sd.location = ""
+    new_table = copy.deepcopy(table)
+    new_table.tableName = new_name
+    try:
+        logger.debug("measuring time to rename table with %d partitions", count)
+        return bench.bench(
+            None,
+            lambda: client.alter_table(db, table_name, new_table),
+            lambda: client.alter_table(db, new_name, table)
+        )
+    finally:
+        logger.debug("dropping table %s.%s", db, table_name)
+        client.drop_table(db, table_name)

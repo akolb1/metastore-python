@@ -103,6 +103,19 @@ class HMSClient(object):
         """
         self.__client.drop_database(db_name, deleteData=True, cascade=False)
 
+    def alter_table(self, db_name, table_name, table):
+        """
+        Alter table
+
+        :param db_name: database name
+        :type db_name: str
+        :param table_name: table to alter
+        :type table_name: str
+        :param table: new table value
+        :type table: Table
+        """
+        self.__client.alter_table(db_name, table_name, table)
+
     @staticmethod
     def make_table(db_name, table_name, owner='', columns=None, partition_keys=None):
         """
