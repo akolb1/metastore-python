@@ -1,5 +1,13 @@
 Simple CLI client for HMS Metastore.
 
+## Kerberos support
+
+**None of these tools work in kerberos-enabled cluster.**
+
+You should consider using [Java-based toolkit](https://github.com/akolb1/hclient)
+ if you need support for Kerberos.
+
+
 # Usage
 
     usage: hclient [-h] [-H HOST] [-d DB] [-t TABLE] [-C COLUMN] [-P PARTITION]
